@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0F1115">
+<title>Gaben Lyrics</title>
+
+<!-- Saját ikon (ikon.jpg) betöltése, ha hiányzik, neonkék G ikonra vált -->
+<link id="app-icon" rel="icon" href="ikon.jpg">
+<link id="apple-icon" rel="apple-touch-icon" href="ikon.jpg">
+<script>
+  (function() {
+    const svg = `<svg xmlns="http://w3.org" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#0F1115"/><rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#00F0FF" stroke-width="14"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="310" fill="#00F0FF">G</text></svg>`;
+    const fallbackUrl = 'data:image/svg+xml;base64,' + btoa(svg);
+    const img = new Image();
+    img.onerror = function() {
+      document.getElementById('app-icon').href = fallbackUrl;
+      document.getElementById('apple-icon').href = fallbackUrl;
+    };
+    img.src = 'ikon.jpg';
+  })();
+</script>
+
+<style>
+  :root {
+    --bg: #0F1115;
+    --card: #181B21;
+    --card-hover: #21252E;
+    --primary: #8B5CF6;
+    --primary-dark: #7C3AED;
+    --accent: #10B981;
+    --neon: #00F0FF;
+    --danger: #EF4444;
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --border: #2A2F3A;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    padding-bottom: 85px; user-select: none;
+  }
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15, 17, 21, 0.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .back-btn {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  h1 { margin: 0; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-dot { color: var(--neon); }
+  .container { padding: 16px; max-width: 700px; margin: 0 auto; }
+  
+  /* Cards & Lists */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 12px;
+    transition: transform 0.1s;
+  }
+  .card:active { transform: scale(0.99); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .card-title { font-size: 17px; font-weight: 700; color: var(--text); }
+  .badge {
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-lp { background: rgba(139, 92, 246, 0.2); color: #C4B5FD; border: 1px solid rgba(139, 92, 246, 0.4); }
+  .badge-ep { background: rgba(0, 240, 255, 0.15); color: var(--neon); border: 1px solid rgba(0, 240, 255, 0.3); }
+  .badge-single { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.3); }
+  .badge-status { background: #2A2F3A; color: var(--muted); }
+  .badge-done { background: rgba(16, 185, 129, 0.2); color: var(--accent); }
+  .meta { font-size: 13px; color: var(--muted); }
+
+  /* Buttons & Inputs */
+  .fab {
+    position: fixed; bottom: 82px; right: 18px; z-index: 40;
+    background: var(--primary); color: white; border: none;
+    padding: 14px 20px; border-radius: 30px; font-size: 15px; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45); cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+  .btn-accent { background: var(--accent); border-color: var(--accent); color: #06281E; }
+  .btn-danger { background: rgba(239, 68, 68, 0.15); border-color: var(--danger); color: var(--danger); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+  input, select, textarea {
+    width: 100%; background: #12141A; border: 1px solid var(--border);
+    color: var(--text); padding: 12px; border-radius: 10px; font-size: 15px;
+    font-family: inherit; margin-bottom: 12px;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+
+  /* Editor & Syllables */
+  .studio-bar {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center; justify-content: space-between;
+  }
+  .bpm-box { display: flex; align-items: center; gap: 8px; }
+  .bpm-input { width: 65px; margin: 0; padding: 6px 8px; text-align: center; font-weight: 700; }
+  .metro-led {
+    width: 14px; height: 14px; border-radius: 50%; background: #2A2F3A;
+    transition: background 0.05s;
+  }
+  .metro-led.flash { background: var(--neon); box-shadow: 0 0 12px var(--neon); }
+  .block-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; margin-bottom: 14px;
+  }
+  .block-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .block-type {
+    font-weight: 800; font-size: 13px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .editor-wrap { display: flex; gap: 8px; align-items: flex-start; }
+  .lyric-area {
+    flex: 1; min-height: 110px; margin: 0; line-height: 1.55; resize: vertical;
+    font-size: 15px; user-select: text;
+  }
+  .syllable-col {
+    width: 32px; padding-top: 12px; text-align: right; font-size: 12px;
+    color: var(--muted); line-height: 1.55; font-family: monospace;
+  }
+  .add-blocks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+  /* Bottom Nav */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: rgba(24, 27, 33, 0.96); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border); display: flex; height: 68px;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 11px; font-weight: 600; gap: 4px; cursor: pointer;
+  }
+  .nav-item.active { color: var(--primary); }
+  .nav-icon { font-size: 20px; }
+
+  /* Modals & Stage Mode */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; width: 100%; max-width: 420px;
+  }
+  #stage-overlay {
+    position: fixed; inset: 0; background: #000; z-index: 200;
+    display: none; flex-direction: column; padding: 20px; overflow-y: auto;
+  }
+  .stage-text { font-size: 22px; line-height: 1.6; white-space: pre-wrap; margin-top: 16px; user-select: text; }
+  .stage-label { color: var(--neon); font-size: 14px; font-weight: 800; text-transform: uppercase; margin-top: 20px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <button id="back-btn" class="back-btn hidden" onclick="goBack()">← Back</button>
+    <h1 id="header-title">Gaben Lyrics<span class="brand-dot">.</span></h1>
+  </div>
+  <div id="header-actions"></div>
+</header>
+
+<div class="container">
+  <!-- 1. ALBUMS VIEW -->
+  <div id="view-albums">
+    <div id="albums-list"></div>
+    <button class="fab" onclick="openModal('modal-album')">+ New Album</button>
+  </div>
+
+  <!-- 2. TRACKLIST VIEW -->
+  <div id="view-tracks" class="hidden">
+    <div id="album-info" style="margin-bottom:14px;"></div>
+    <div id="tracks-list"></div>
+    <button class="fab" onclick="openModal('modal-track')">+ New Lyrics</button>
+  </div>
+
+  <!-- 3. LYRIC STUDIO EDITOR -->
+  <div id="view-editor" class="hidden">
+    <div class="studio-bar">
+      <div class="bpm-box">
+        <div id="metro-led" class="metro-led"></div>
+        <input type="number" id="song-bpm" class="bpm-input" value="120" min="40" max="240" onchange="updateTrackMeta()">
+        <span class="meta">BPM</span>
+        <button id="metro-btn" class="btn btn-sm" onclick="toggleMetronome()">▶ Beat</button>
+        <button class="btn btn-sm" onclick="tapTempo()">Tap</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <select id="song-status" style="margin:0; padding:6px 8px; font-size:13px;" onchange="updateTrackMeta()">
+          <option value="Draft">Draft</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Ready">Ready</option>
+        </select>
+        <button class="btn btn-sm btn-accent" onclick="openStageMode()">🎤 Stage</button>
+      </div>
+    </div>
+
+    <div id="blocks-container"></div>
+
+    <div class="card">
+      <div class="meta" style="margin-bottom:8px;">Add Section Block:</div>
+      <div class="add-blocks">
+        <button class="btn btn-sm" onclick="addBlock('Intro')">+ Intro</button>
+        <button class="btn btn-sm" onclick="addBlock('Verse')">+ Verse</button>
+        <button class="btn btn-sm" onclick="addBlock('Pre-Chorus')">+ Pre-Chorus</button>
+        <button class="btn btn-sm" onclick="addBlock('Chorus')">+ Chorus</button>
+        <button class="btn btn-sm" onclick="addBlock('Bridge')">+ Bridge</button>
+        <button class="btn btn-sm" onclick="addBlock('Outro')">+ Outro</button>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button class="btn" style="flex:1;" onclick="copyFullLyrics()">📋 Copy Lyrics</button>
+      <button class="btn btn-danger" onclick="deleteCurrentTrack()">🗑 Delete</button>
+    </div>
+  </div>
+
+  <!-- 4. IDEA VAULT VIEW -->
+  <div id="view-ideas" class="hidden">
+    <div class="card">
+      <textarea id="new-idea-text" rows="3" placeholder="Write a random line, rhyme pair, or hook idea..."></textarea>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="new-idea-tag" placeholder="Tag (e.g. Dark, Chorus, Rap)" style="margin:0;">
+        <button class="btn btn-primary" onclick="addIdea()">Save</button>
+      </div>
+    </div>
+    <div id="ideas-list"></div>
+  </div>
+
+  <!-- 5. BACKUP / SETTINGS VIEW -->
+  <div id="view-backup" class="hidden">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px;">Data Backup & Restore</div>
+      <p class="meta" style="line-height:1.5;">All albums and lyrics are saved locally on your phone. Export a backup file regularly so you never lose your work.</p>
+      <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportData()">⬇ Export Backup (.json)</button>
+      <label class="btn" style="display:block; text-align:center; cursor:pointer;">
+        ⬆ Import Backup (.json)
+        <input type="file" accept=".json" style="display:none;" onchange="importData(event)">
+      </label>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:6px;">Custom App Icon</div>
+      <p class="meta" style="line-height:1.5;">Upload an <b>ikon.jpg</b> file to your GitHub repository next to index.html to replace the default neon blue "G" icon.</p>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('albums', this)">
+    <span class="nav-icon">💿</span><span>Albums</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('ideas', this)">
+    <span class="nav-icon">💡</span><span>Idea Vault</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('backup', this)">
+    <span class="nav-icon">💾</span><span>Backup</span>
+  </div>
+</nav>
+
+<!-- MODAL: NEW ALBUM -->
+<div id="modal-album" class="modal-bg" onclick="closeModals(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0;">Create New Project</h3>
+    <input type="text" id="album-title-input" placeholder="Album Title (e.g. A Városban)">
+    <select id="album-type-input">
+      <option value="LP">LP (Full Album)</option>
+      <option value="EP">EP (Extended Play)</option>
+      <option value="Single">Single / Loose Tracks</option>
+    </select>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn" onclick="closeAllModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="createAlbum()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NEW LYRICS -->
+<div id="modal-track" class="modal-bg" onclick="closeModals(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0;">New Lyrics</h3>
+    <input type="text" id="track-title-input" placeholder="Song Title">
+    <input type="number" id="track-bpm-input" placeholder="Tempo (BPM) - optional" value="120">
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn" onclick="closeAllModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="createTrack()">Start Writing</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE MODE OVERLAY -->
+<div id="stage-overlay">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span style="color:var(--neon); font-weight:700;">🎤 STAGE MODE (Screen Awake)</span>
+    <button class="btn btn-sm btn-danger" onclick="closeStageMode()">✕ Exit</button>
+  </div>
+  <h2 id="stage-song-title" style="margin:12px 0 0 0;"></h2>
+  <div id="stage-content"></div>
+</div>
+<script>
+  let db = JSON.parse(localStorage.getItem('gaben_lyrics_db')) || {
+    albums: [
+      {
+        id: 'demo-1',
+        title: 'A Városban',
+        type: 'LP',
+        tracks: [
+          {
+            id: 't-1',
+            title: 'Éjszakai Fények',
+            bpm: 95,
+            status: 'In Progress',
+            blocks: [
+              { id: 'b-1', type: 'Verse', text: 'Hideg aszfalt, neon fények az éjben,\nLépések zaja visszhangzik a térben.' },
+              { id: 'b-2', type: 'Chorus', text: 'Ez a város nem alszik el soha,\nMinden utca egy újabb lakoma.' }
+            ]
+          }
+        ]
+      }
+    ],
+    ideas: []
+  };
+
+  let currentAlbumId = null;
+  let currentTrackId = null;
+  let metroInterval = null;
+  let audioCtx = null;
+  let tapTimes = [];
+  let wakeLock = null;
+
+  function saveDB() {
+    localStorage.setItem('gaben_lyrics_db', JSON.stringify(db));
+  }
+
+  // NAVIGATION
+  function switchTab(tab, el) {
+    stopMetronome();
+    currentAlbumId = null;
+    currentTrackId = null;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    hideAllViews();
+    document.getElementById('back-btn').classList.add('hidden');
+    document.getElementById('header-actions').innerHTML = '';
+
+    if (tab === 'albums') {
+      document.getElementById('header-title').innerHTML = 'Gaben Lyrics<span class="brand-dot">.</span>';
+      document.getElementById('view-albums').classList.remove('hidden');
+      renderAlbums();
+    } else if (tab === 'ideas') {
+      document.getElementById('header-title').innerText = 'Idea Vault';
+      document.getElementById('view-ideas').classList.remove('hidden');
+      renderIdeas();
+    } else if (tab === 'backup') {
+      document.getElementById('header-title').innerText = 'Backup & Settings';
+      document.getElementById('view-backup').classList.remove('hidden');
+    }
+  }
+
+  function hideAllViews() {
+    ['view-albums', 'view-tracks', 'view-editor', 'view-ideas', 'view-backup'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+  }
+
+  function goBack() {
+    stopMetronome();
+    if (currentTrackId) {
+      currentTrackId = null;
+      openAlbum(currentAlbumId);
+    } else if (currentAlbumId) {
+      switchTab('albums', document.querySelectorAll('.nav-item')[0]);
+    }
+  }
+
+  // ALBUMS
+  function renderAlbums() {
+    const list = document.getElementById('albums-list');
+    if (db.albums.length === 0) {
+      list.innerHTML = '<div class="card meta" style="text-align:center; padding:30px;">No albums yet. Tap "+ New Album" to start!</div>';
+      return;
+    }
+    list.innerHTML = db.albums.map(a => {
+      const badgeClass = a.type === 'LP' ? 'badge-lp' : (a.type === 'EP' ? 'badge-ep' : 'badge-single');
+      return `
+        <div class="card" onclick="openAlbum('${a.id}')">
+          <div class="card-header">
+            <span class="card-title">${escapeHtml(a.title)}</span>
+            <span class="badge ${badgeClass}">${a.type}</span>
+          </div>
+          <div class="meta">${a.tracks.length} track${a.tracks.length === 1 ? '' : 's'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function createAlbum() {
+    const title = document.getElementById('album-title-input').value.trim();
+    const type = document.getElementById('album-type-input').value;
+    if (!title) return;
+    db.albums.unshift({ id: 'alb-' + Date.now(), title, type, tracks: [] });
+    saveDB();
+    document.getElementById('album-title-input').value = '';
+    closeAllModals();
+    renderAlbums();
+  }
+
+  function openAlbum(albumId) {
+    currentAlbumId = albumId;
+    const album = db.albums.find(a => a.id === albumId);
+    if (!album) return;
+    hideAllViews();
+    document.getElementById('view-tracks').classList.remove('hidden');
+    document.getElementById('back-btn').classList.remove('hidden');
+    document.getElementById('header-title').innerText = album.title;
+    document.getElementById('header-actions').innerHTML = `<button class="btn btn-sm btn-danger" onclick="deleteAlbum('${album.id}')">Delete</button>`;
+
+    document.getElementById('album-info').innerHTML = `<span class="badge badge-lp">${album.type}</span> <span class="meta" style="margin-left:8px;">${album.tracks.length} songs</span>`;
+    
+    const list = document.getElementById('tracks-list');
+    if (album.tracks.length === 0) {
+      list.innerHTML = '<div class="card meta" style="text-align:center; padding:30px;">Empty tracklist. Tap "+ New Lyrics" to write your first song!</div>';
+      return;
+    }
+    list.innerHTML = album.tracks.map((t, idx) => `
+      <div class="card" onclick="openTrack('${t.id}')">
+        <div class="card-header">
+          <span class="card-title">${idx + 1}. ${escapeHtml(t.title)}</span>
+          <span class="badge ${t.status === 'Ready' ? 'badge-done' : 'badge-status'}">${t.status}</span>
+        </div>
+        <div class="meta">${t.bpm} BPM • ${t.blocks.length} sections</div>
+      </div>
+    `).join('');
+  }
+
+  function deleteAlbum(albumId) {
+    if (!confirm('Delete this entire album and all its lyrics?')) return;
+    db.albums = db.albums.filter(a => a.id !== albumId);
+    saveDB();
+    switchTab('albums', document.querySelectorAll('.nav-item')[0]);
+  }
+
+  // TRACKS & STUDIO EDITOR
+  function createTrack() {
+    const title = document.getElementById('track-title-input').value.trim();
+    const bpm = parseInt(document.getElementById('track-bpm-input').value) || 120;
+    if (!title) return;
+    const album = db.albums.find(a => a.id === currentAlbumId);
+    const newTrack = {
+      id: 'trk-' + Date.now(),
+      title, bpm, status: 'Draft',
+      blocks: [
+        { id: 'blk-' + Date.now() + '1', type: 'Verse', text: '' },
+        { id: 'blk-' + Date.now() + '2', type: 'Chorus', text: '' }
+      ]
+    };
+    album.tracks.push(newTrack);
+    saveDB();
+    document.getElementById('track-title-input').value = '';
+    closeAllModals();
+    openTrack(newTrack.id);
+  }
+
+  function openTrack(trackId) {
+    currentTrackId = trackId;
+    const album = db.albums.find(a => a.id === currentAlbumId);
+    const track = album.tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    hideAllViews();
+    document.getElementById('view-editor').classList.remove('hidden');
+    document.getElementById('back-btn').classList.remove('hidden');
+    document.getElementById('header-title').innerText = track.title;
+    document.getElementById('header-actions').innerHTML = '';
+
+    document.getElementById('song-bpm').value = track.bpm;
+    document.getElementById('song-status').value = track.status;
+    renderBlocks();
+  }
+
+  function getCurrentTrack() {
+    const album = db.albums.find(a => a.id === currentAlbumId);
+    return album ? album.tracks.find(t => t.id === currentTrackId) : null;
+  }
+
+  function updateTrackMeta() {
+    const track = getCurrentTrack();
+    if (!track) return;
+    track.bpm = parseInt(document.getElementById('song-bpm').value) || 120;
+    track.status = document.getElementById('song-status').value;
+    saveDB();
+    if (metroInterval) { stopMetronome(); toggleMetronome(); }
+  }
+
+  function countSyllables(line) {
+    const clean = line.trim();
+    if (!clean) return '';
+    const matches = clean.match(/[aeiouyáéíóöőúüűAEIOUYÁÉÍÓÖŐÚÜŰ]+/g);
+    return matches ? matches.length : 0;
+  }
+
+  function updateSyllableColumn(textarea, colId) {
+    const lines = textarea.value.split('\n');
+    document.getElementById(colId).innerHTML = lines.map(l => countSyllables(l) || '&nbsp;').join('<br>');
+  }
+
+  function renderBlocks() {
+    const track = getCurrentTrack();
+    const container = document.getElementById('blocks-container');
+    container.innerHTML = track.blocks.map((b, idx) => {
+      const lines = b.text.split('\n');
+      const sylHtml = lines.map(l => countSyllables(l) || '&nbsp;').join('<br>');
+      return `
+        <div class="block-card">
+          <div class="block-top">
+            <span class="block-type">[${b.type}]</span>
+            <div style="display:flex; gap:6px;">
+              ${idx > 0 ? `<button class="btn btn-sm" onclick="moveBlock(${idx}, -1)">↑</button>` : ''}
+              ${idx < track.blocks.length - 1 ? `<button class="btn btn-sm" onclick="moveBlock(${idx}, 1)">↓</button>` : ''}
+              <button class="btn btn-sm" onclick="duplicateBlock(${idx})">❐</button>
+              <button class="btn btn-sm btn-danger" onclick="removeBlock(${idx})">✕</button>
+            </div>
+          </div>
+          <div class="editor-wrap">
+            <textarea class="lyric-area" placeholder="Write ${b.type} lyrics..." oninput="onBlockInput(${idx}, this, 'syl-${b.id}')">${escapeHtml(b.text)}</textarea>
+            <div id="syl-${b.id}" class="syllable-col">${sylHtml}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function onBlockInput(idx, el, colId) {
+    const track = getCurrentTrack();
+    track.blocks[idx].text = el.value;
+    saveDB();
+    updateSyllableColumn(el, colId);
+  }
+
+  function addBlock(type) {
+    const track = getCurrentTrack();
+    track.blocks.push({ id: 'blk-' + Date.now(), type, text: '' });
+    saveDB();
+    renderBlocks();
+  }
+
+  function moveBlock(idx, dir) {
+    const track = getCurrentTrack();
+    const temp = track.blocks[idx];
+    track.blocks[idx] = track.blocks[idx + dir];
+    track.blocks[idx + dir] = temp;
+    saveDB();
+    renderBlocks();
+  }
+
+  function duplicateBlock(idx) {
+    const track = getCurrentTrack();
+    const copy = { ...track.blocks[idx], id: 'blk-' + Date.now() };
+    track.blocks.splice(idx + 1, 0, copy);
+    saveDB();
+    renderBlocks();
+  }
+
+  function removeBlock(idx) {
+    const track = getCurrentTrack();
+    track.blocks.splice(idx, 1);
+    saveDB();
+    renderBlocks();
+  }
+
+  function deleteCurrentTrack() {
+    if (!confirm('Delete this song?')) return;
+    const album = db.albums.find(a => a.id === currentAlbumId);
+    album.tracks = album.tracks.filter(t => t.id !== currentTrackId);
+    saveDB();
+    currentTrackId = null;
+    openAlbum(currentAlbumId);
+  }
+
+  function copyFullLyrics() {
+    const track = getCurrentTrack();
+    const text = `${track.title} (${track.bpm} BPM)\n\n` + track.blocks.map(b => `[${b.type}]\n${b.text}`).join('\n\n');
+    navigator.clipboard.writeText(text).then(() => alert('Lyrics copied to clipboard!'));
+  }
+
+  // METRONOME
+  function playClick() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = 900;
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+
+    const led = document.getElementById('metro-led');
+    led.classList.add('flash');
+    setTimeout(() => led.classList.remove('flash'), 90);
+  }
+
+  function toggleMetronome() {
+    const btn = document.getElementById('metro-btn');
+    if (metroInterval) {
+      stopMetronome();
+    } else {
+      const bpm = parseInt(document.getElementById('song-bpm').value) || 120;
+      const ms = 60000 / bpm;
+      playClick();
+      metroInterval = setInterval(playClick, ms);
+      btn.innerText = '⏹ Stop';
+      btn.classList.add('btn-primary');
+    }
+  }
+
+  function stopMetronome() {
+    if (metroInterval) {
+      clearInterval(metroInterval);
+      metroInterval = null;
+    }
+    const btn = document.getElementById('metro-btn');
+    if (btn) {
+      btn.innerText = '▶ Beat';
+      btn.classList.remove('btn-primary');
+    }
+  }
+
+  function tapTempo() {
+    const now = Date.now();
+    if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > 2000) tapTimes = [];
+    tapTimes.push(now);
+    if (tapTimes.length > 1) {
+      let diffs = [];
+      for (let i = 1; i < tapTimes.length; i++) diffs.push(tapTimes[i] - tapTimes[i - 1]);
+      const avg = diffs.reduce((a, b) => a + b) / diffs.length;
+      const bpm = Math.round(60000 / avg);
+      if (bpm >= 40 && bpm <= 240) {
+        document.getElementById('song-bpm').value = bpm;
+        updateTrackMeta();
+      }
+    }
+  }
+
+  // STAGE MODE
+  async function openStageMode() {
+    const track = getCurrentTrack();
+    document.getElementById('stage-song-title').innerText = track.title;
+    document.getElementById('stage-content').innerHTML = track.blocks.map(b => `
+      <div class="stage-label">[${b.type}]</div>
+      <div class="stage-text">${escapeHtml(b.text)}</div>
+    `).join('');
+    document.getElementById('stage-overlay').style.display = 'flex';
+    try {
+      if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) {}
+  }
+
+  function closeStageMode() {
+    document.getElementById('stage-overlay').style.display = 'none';
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+
+  // IDEA VAULT
+  function addIdea() {
+    const text = document.getElementById('new-idea-text').value.trim();
+    const tag = document.getElementById('new-idea-tag').value.trim() || 'Idea';
+    if (!text) return;
+    db.ideas.unshift({ id: 'id-' + Date.now(), text, tag, date: new Date().toLocaleDateString() });
+    saveDB();
+    document.getElementById('new-idea-text').value = '';
+    document.getElementById('new-idea-tag').value = '';
+    renderIdeas();
+  }
+
+  function renderIdeas() {
+    const list = document.getElementById('ideas-list');
+    if (db.ideas.length === 0) {
+      list.innerHTML = '<div class="meta" style="text-align:center; padding:20px;">No saved ideas yet.</div>';
+      return;
+    }
+    list.innerHTML = db.ideas.map((item, idx) => `
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-ep">${escapeHtml(item.tag)}</span>
+          <button class="btn btn-sm btn-danger" onclick="deleteIdea(${idx})">✕</button>
+        </div>
+        <div style="white-space:pre-wrap; margin-top:8px; line-height:1.5; user-select:text;">${escapeHtml(item.text)}</div>
+      </div>
+    `).join('');
+  }
+
+  function deleteIdea(idx) {
+    db.ideas.splice(idx, 1);
+    saveDB();
+    renderIdeas();
+  }
+
+  // BACKUP EXPORT / IMPORT
+  function exportData() {
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gaben-lyrics-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (imported.albums) {
+          db = imported;
+          saveDB();
+          alert('Backup restored successfully!');
+          switchTab('albums', document.querySelectorAll('.nav-item')[0]);
+        } else {
+          alert('Invalid backup file.');
+        }
+      } catch (err) {
+        alert('Error reading file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // MODALS & UTILS
+  function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+  function closeAllModals() { document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); }
+  function closeModals(e) { if (e.target.classList.contains('modal-bg')) closeAllModals(); }
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+  }
+
+  // INIT
+  renderAlbums();
+</script>
+</body>
+</html>
