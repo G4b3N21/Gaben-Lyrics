@@ -74,7 +74,8 @@
   .block-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .block-type { font-weight: 800; font-size: 13px; color: var(--primary); text-transform: uppercase; }
   .editor-wrap { display: flex; gap: 8px; align-items: flex-start; }
-  .lyric-area { flex: 1; min-height: 110px; margin: 0; line-height: 1.55; resize: vertical; font-size: 15px; user-select: text; }
+  .lyric-area { flex: 1; min-height: 90px; margin: 0; line-height: 1.55; resize: none; overflow: hidden; font-size: 15px; user-select: text; }
+  .prompt-area { min-height: 54px; margin: 0; line-height: 1.45; resize: none; overflow: hidden; font-size: 13px; color: #C4B5FD; user-select: text; }
   .syllable-col { width: 30px; padding-top: 11px; text-align: right; font-size: 12px; color: var(--muted); line-height: 1.55; font-family: monospace; }
   .add-blocks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .rhyme-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow-y: auto; margin-top: 10px; }
@@ -155,6 +156,15 @@
       </select>
     </div>
 
+    <!-- MUSIC / AI STYLE PROMPT BOX -->
+    <div class="block-card" style="border-color: rgba(139, 92, 246, 0.35);">
+      <div class="block-top">
+        <span class="block-type" style="color:var(--neon);">🎛️ Music / Style Prompt</span>
+        <button class="btn btn-sm btn-neon" onclick="copyMusicPrompt()">📋 Copy Prompt</button>
+      </div>
+      <textarea id="song-prompt" class="prompt-area" placeholder="Instruments, mood, vocal style, AI prompt (e.g. Warm piano, atmospheric electric guitar, sparse beat)..." oninput="onPromptInput(this)"></textarea>
+    </div>
+
     <div id="blocks-container"></div>
 
     <div class="card">
@@ -171,7 +181,7 @@
     </div>
 
     <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-      <button class="btn" style="flex:1;" onclick="copyFullLyrics()">📋 Copy</button>
+      <button class="btn" style="flex:1;" onclick="copyFullLyrics()">📋 Copy Lyrics</button>
       <button class="btn" style="flex:1;" onclick="openMoveModal()">📁 Move</button>
       <button class="btn btn-danger" onclick="deleteCurrentTrack()">🗑</button>
     </div>
@@ -193,7 +203,7 @@
   <div id="view-backup" class="hidden">
     <div class="card">
       <div class="card-title" style="margin-bottom:8px;">Data Backup & Restore</div>
-      <p class="meta" style="line-height:1.5;">Export your albums, covers, and lyrics into a single .json file so you never lose your work.</p>
+      <p class="meta" style="line-height:1.5;">Export your albums, covers, prompts, and lyrics into a single .json file so you never lose your work.</p>
       <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportData()">⬇ Export Backup (.json)</button>
       <label class="btn" style="display:block; text-align:center; cursor:pointer;">
         ⬆ Import Backup (.json)
@@ -244,7 +254,7 @@
   </div>
 </div>
 
-<!-- MODAL: NEW LYRICS (WITH FULL PASTE & DURATION) -->
+<!-- MODAL: NEW LYRICS -->
 <div id="modal-track" class="modal-bg" onclick="closeModals(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h3 style="margin-top:0;">New Lyrics</h3>
@@ -253,6 +263,7 @@
       <input type="number" id="track-bpm-input" placeholder="BPM (120)" value="120" style="flex:1;">
       <input type="text" id="track-dur-input" placeholder="Length (e.g. 3:25)" style="flex:1;">
     </div>
+    <textarea id="track-prompt-input" rows="2" placeholder="Music / Style Prompt (optional)..."></textarea>
     <textarea id="track-paste-input" rows="5" placeholder="Paste full existing lyrics here (leave empty to start with Verse & Chorus blocks)..."></textarea>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button class="btn" onclick="closeAllModals()">Cancel</button>
@@ -261,7 +272,7 @@
   </div>
 </div>
 
-<!-- MODAL: MOVE TRACK TO ANOTHER ALBUM -->
+<!-- MODAL: MOVE TRACK -->
 <div id="modal-move" class="modal-bg" onclick="closeModals(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h3 style="margin-top:0;">📁 Move Song to Album</h3>
@@ -305,7 +316,6 @@
   </div>
 </div>
 
-<!-- STAGE & BOOKLET OVERLAYS -->
 <div id="stage-overlay">
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <span style="color:var(--neon); font-weight:700;">🎤 STAGE MODE</span>
@@ -333,6 +343,7 @@
         coverGrad: 'linear-gradient(135deg, #4C1D95, #0F172A)', coverEmoji: '🌃', coverImg: '',
         tracks: [{
           id: 't-1', title: 'Éjszakai Fények', bpm: 95, duration: '3:15', status: 'In Progress',
+          prompt: 'Dark moody synth bass, crisp boom bap drums, atmospheric piano',
           blocks: [
             { id: 'b-1', type: 'Verse', text: 'Hideg aszfalt, neon fények az éjben,\nLépések zaja visszhangzik a térben.' },
             { id: 'b-2', type: 'Chorus', text: 'Ez a város nem alszik el soha,\nMinden utca egy újabb lakoma.' }
@@ -352,7 +363,7 @@
   function parseDurationToSec(durStr) {
     if (!durStr) return 0;
     const parts = durStr.trim().split(':');
-    if (parts.length === 2) return (parseInt(parts) || 0) * 60 + (parseInt(parts[1]) || 0);
+    if (parts.length === 2) return (parseInt(parts) || 0) * 60 + (parseInt(parts) || 0);
     return 0;
   }
 
@@ -367,8 +378,7 @@
 
   function formatSec(sec) {
     if (!sec) return '0:00';
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
+    const m = Math.floor(sec / 60), s = sec % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   }
 
@@ -394,8 +404,12 @@
 
   function goBack() {
     stopMetronome();
-    if (currentTrackId) { currentTrackId = null; openAlbum(currentAlbumId); }
-    else if (currentAlbumId) { switchTab('albums', document.querySelectorAll('.nav-item')); }
+    if (currentTrackId) {
+      currentTrackId = null;
+      openAlbum(currentAlbumId);
+    } else if (currentAlbumId) {
+      switchTab('albums', document.querySelectorAll('.nav-item'));
+    }
   }
 
   function setAlbumFilter(type, btn) {
@@ -423,7 +437,6 @@
       return `<div class="card" onclick="openAlbum('${a.id}')"><div class="album-row">${getCoverHtml(a)}<div class="album-details"><div class="card-header"><span class="card-title">${escapeHtml(a.title)}</span><span class="badge ${badgeClass}">${a.type}</span></div><div class="meta">${a.tracks.length} track${a.tracks.length === 1 ? '' : 's'}${timeStr}${a.genre ? ' • ' + escapeHtml(a.genre) : ''}</div></div></div></div>`;
     }).join('');
   }
-
   function openAlbumModal(editId = null) {
     editingAlbumId = editId; tempCoverImg = ''; document.getElementById('cover-upload-status').innerText = '';
     if (editId) {
@@ -504,8 +517,26 @@
     list.innerHTML = album.tracks.map((t, idx) => {
       const est = estimateTrackSec(t);
       const durBadge = est.sec > 0 ? ` • ${est.isManual ? '' : '~'}${formatSec(est.sec)}` : '';
-      return `<div class="card" onclick="openTrack('${t.id}')"><div class="card-header"><span class="card-title">${idx + 1}. ${escapeHtml(t.title)}</span><span class="badge ${t.status === 'Ready' ? 'badge-done' : 'badge-status'}">${t.status}</span></div><div class="meta">${t.bpm} BPM${durBadge}</div></div>`;
+      return `<div class="card" onclick="openTrack('${t.id}')">
+        <div class="card-header">
+          <span class="card-title">${idx + 1}. ${escapeHtml(t.title)}</span>
+          <div style="display:flex; align-items:center; gap:5px;" onclick="event.stopPropagation()">
+            ${idx > 0 ? `<button class="btn btn-sm" style="padding:4px 8px;" onclick="moveTrackOrder(${idx}, -1)">↑</button>` : ''}
+            ${idx < album.tracks.length - 1 ? `<button class="btn btn-sm" style="padding:4px 8px;" onclick="moveTrackOrder(${idx}, 1)">↓</button>` : ''}
+            <span class="badge ${t.status === 'Ready' ? 'badge-done' : 'badge-status'}">${t.status}</span>
+          </div>
+        </div>
+        <div class="meta">${t.bpm} BPM${durBadge}</div>
+      </div>`;
     }).join('');
+  }
+
+  function moveTrackOrder(idx, dir) {
+    const album = db.albums.find(a => a.id === currentAlbumId);
+    if (!album) return;
+    [album.tracks[idx], album.tracks[idx + dir]] = [album.tracks[idx + dir], album.tracks[idx]];
+    saveDB();
+    openAlbum(currentAlbumId);
   }
 
   function deleteAlbum(albumId) {
@@ -522,18 +553,32 @@
     </div>`;
     album.tracks.forEach((t, i) => {
       const est = estimateTrackSec(t);
+      const promptHtml = t.prompt ? `<div style="font-size:13px; color:#A78BFA; font-style:italic; margin-bottom:8px;">Style: ${escapeHtml(t.prompt)}</div>` : '';
       html += `<div style="margin-bottom:32px; page-break-inside:avoid;">
         <h3 style="color:var(--neon); margin-bottom:4px;">${i + 1}. ${escapeHtml(t.title)} <span style="font-size:13px; color:#888; font-weight:normal;">(${est.sec ? formatSec(est.sec) : t.bpm + ' BPM'})</span></h3>
+        ${promptHtml}
         ${t.blocks.map(b => `<div style="margin-top:10px;"><div style="font-size:11px; text-transform:uppercase; color:#888; font-weight:bold;">[${b.type}]</div><div style="white-space:pre-wrap; line-height:1.6; font-size:16px;">${escapeHtml(b.text)}</div></div>`).join('')}
       </div>`;
     });
     document.getElementById('booklet-content').innerHTML = html;
     document.getElementById('booklet-overlay').style.display = 'flex';
   }
+  function autoResize(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 4) + 'px';
+  }
+
+  function resizeAllTextareas() {
+    setTimeout(() => {
+      document.querySelectorAll('#view-editor textarea').forEach(autoResize);
+    }, 10);
+  }
 
   function openNewTrackModal() {
     document.getElementById('track-title-input').value = '';
     document.getElementById('track-dur-input').value = '';
+    document.getElementById('track-prompt-input').value = '';
     document.getElementById('track-paste-input').value = '';
     openModal('modal-track');
   }
@@ -542,6 +587,7 @@
     const title = document.getElementById('track-title-input').value.trim();
     const bpm = parseInt(document.getElementById('track-bpm-input').value) || 120;
     const duration = document.getElementById('track-dur-input').value.trim();
+    const prompt = document.getElementById('track-prompt-input').value.trim();
     const pasted = document.getElementById('track-paste-input').value.trim();
     if (!title) return;
 
@@ -550,9 +596,10 @@
       ? [{ id: 'blk-' + Date.now(), type: 'Full Lyrics', text: pasted }]
       : [{ id: 'blk-' + Date.now() + '1', type: 'Verse', text: '' }, { id: 'blk-' + Date.now() + '2', type: 'Chorus', text: '' }];
 
-    const newTrack = { id: 'trk-' + Date.now(), title, bpm, duration, status: pasted ? 'Ready' : 'Draft', blocks };
+    const newTrack = { id: 'trk-' + Date.now(), title, bpm, duration, prompt, status: pasted ? 'Ready' : 'Draft', blocks };
     album.tracks.push(newTrack); saveDB(); closeAllModals(); openTrack(newTrack.id);
   }
+
   function openTrack(trackId) {
     currentTrackId = trackId;
     const track = getCurrentTrack(); if (!track) return;
@@ -564,7 +611,9 @@
     document.getElementById('song-bpm').value = track.bpm;
     document.getElementById('song-duration').value = track.duration || '';
     document.getElementById('song-status').value = track.status;
+    document.getElementById('song-prompt').value = track.prompt || '';
     renderBlocks();
+    resizeAllTextareas();
   }
 
   function getCurrentTrack() {
@@ -579,6 +628,19 @@
     track.status = document.getElementById('song-status').value;
     saveDB();
     if (metroInterval) { stopMetronome(); toggleMetronome(); }
+  }
+
+  function onPromptInput(el) {
+    const track = getCurrentTrack(); if (!track) return;
+    track.prompt = el.value;
+    saveDB();
+    autoResize(el);
+  }
+
+  function copyMusicPrompt() {
+    const track = getCurrentTrack();
+    if (!track || !track.prompt) { alert('No music prompt written yet.'); return; }
+    navigator.clipboard.writeText(track.prompt).then(() => alert('Music prompt copied!'));
   }
 
   function openMoveModal() {
@@ -604,7 +666,8 @@
   }
 
   function countSyllables(line) {
-    const clean = line.trim(); if (!clean) return '';
+    const clean = line.trim();
+    if (!clean || /^\[.*\]$/.test(clean)) return '';
     const matches = clean.match(/[aeiouyáéíóöőúüűAEIOUYÁÉÍÓÖŐÚÜŰ]+/g);
     return matches ? matches.length : 0;
   }
@@ -615,11 +678,13 @@
       const sylHtml = b.text.split('\n').map(l => countSyllables(l) || '&nbsp;').join('<br>');
       return `<div class="block-card"><div class="block-top"><span class="block-type">[${b.type}]</span><div style="display:flex; gap:6px;">${idx > 0 ? `<button class="btn btn-sm" onclick="moveBlock(${idx}, -1)">↑</button>` : ''}${idx < track.blocks.length - 1 ? `<button class="btn btn-sm" onclick="moveBlock(${idx}, 1)">↓</button>` : ''}<button class="btn btn-sm" onclick="duplicateBlock(${idx})">❐</button><button class="btn btn-sm btn-danger" onclick="removeBlock(${idx})">✕</button></div></div><div class="editor-wrap"><textarea class="lyric-area" placeholder="Write ${b.type} lyrics..." oninput="onBlockInput(${idx}, this, 'syl-${b.id}')">${escapeHtml(b.text)}</textarea><div id="syl-${b.id}" class="syllable-col">${sylHtml}</div></div></div>`;
     }).join('');
+    resizeAllTextareas();
   }
 
   function onBlockInput(idx, el, colId) {
     const track = getCurrentTrack(); track.blocks[idx].text = el.value; saveDB();
     document.getElementById(colId).innerHTML = el.value.split('\n').map(l => countSyllables(l) || '&nbsp;').join('<br>');
+    autoResize(el);
   }
 
   function addBlock(type) { getCurrentTrack().blocks.push({ id: 'blk-' + Date.now(), type, text: '' }); saveDB(); renderBlocks(); }
@@ -688,7 +753,7 @@
   function openCardModal() {
     const track = getCurrentTrack(), sel = window.getSelection().toString().trim();
     if (sel) document.getElementById('card-lines-input').value = sel;
-    else if (track.blocks.length > 0) document.getElementById('card-lines-input').value = track.blocks.text.split('\n').slice(0, 4).join('\n');
+    else if (track.blocks.length > 0) document.getElementById('card-lines-input').value = track.blocks[0].text.split('\n').slice(0, 4).join('\n');
     document.getElementById('lyric-canvas').style.display = 'none';
     document.getElementById('download-card-btn').classList.add('hidden');
     openModal('modal-card');
